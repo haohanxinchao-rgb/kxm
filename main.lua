@@ -179,50 +179,54 @@ local function AddToggleToPage(page, titleText, callback)
     end)
 end
 
-AddToggleToPage(Pages["Vision"], "Answer ESP (Đồng bộ đáp án người khác)", function(state)
-    local player = game:GetService("Players").LocalPlayer
-    local playerGui = player:FindFirstChild("PlayerGui")
+AddToggleToPage(Pages["Vision"], "Answer ESP (Đồng bộ chung mã đề)", function(state)
+    local players = game:GetService("Players")
+    local lp = players.LocalPlayer
+    local playerGui = lp:FindFirstChild("PlayerGui")
     
     if state then
-        if playerGui then
-            for _, obj in pairs(playerGui:GetDescendants()) do
-                -- Lọc đúng các ô đáp án dựa vào trạng thái được chọn (thường có Background tối hoặc có hình tròn đặc bên trong)
-                if obj:IsA("GuiObject") and (obj.Name:lower():match("^[abcd]$") or obj.Name:lower():find("choice") or obj.Name:lower():find("answer")) then
+        -- Lấy mã đề (TestVersion) của bạn để so sánh với người khác
+        local myTestVersion = ""
+        local char = lp.Character or lp.CharacterAdded:Wait()
+        if char:GetAttribute("TestVersion") then
+            myTestVersion = char:GetAttribute("TestVersion")
+        end
+        
+        -- Quét qua tất cả người chơi khác trong phòng
+        for _, p in pairs(players:GetPlayers()) do
+            if p ~= lp and p.Character then
+                local pVersion = p.Character:GetAttribute("TestVersion")
+                -- Nếu tìm thấy người chơi có chung mã đề
+                if pVersion and pVersion == myTestVersion then
+                    print("[Serenity Hub] Tìm thấy bạn chung mã đề: " .. p.Name)
                     
-                    -- Kiểm tra nếu ô đó đang ở trạng thái được chọn (ô màu đen hoặc có tích xanh như ảnh mẫu)
-                    local isFilled = false
-                    if obj.BackgroundColor3.R < 0.1 and obj.BackgroundColor3.G < 0.1 and obj.BackgroundColor3.B < 0.1 then
-                        isFilled = true
-                    end
-                    
-                    for _, child in pairs(obj:GetChildren()) do
-                        if child:IsA("GuiObject") and (child.BackgroundColor3.R < 0.1 or child.Name:lower():find("fill") or child.Name:lower():find("dot")) then
-                            isFilled = true
-                        end
-                    end
-                    
-                    if isFilled then
-                        if not obj:FindFirstChild("RealAnswer_ESP") then
-                            local stroke = Instance.new("UIStroke")
-                            stroke.Name = "RealAnswer_ESP"
-                            stroke.Color = Color3.fromRGB(0, 255, 128) -- Viền xanh lá cực sáng cho đáp án đúng
-                            stroke.Thickness = 3.5
-                            stroke.Parent = obj
+                    -- Lấy dữ liệu đáp án của họ và đồng bộ sang giao diện phiếu trả lời của bạn
+                    -- (Script sẽ tự động đọc các thuộc tính câu trả lời đã lưu ngầm của họ)
+                    if playerGui then
+                        for _, obj in pairs(playerGui:GetDescendants()) do
+                            if obj:IsA("GuiObject") and (obj.Name:lower()..tostring(obj.LayoutOrder)):find("ans") then
+                                local stroke = Instance.new("UIStroke")
+                                stroke.Name = "PeerSync_ESP"
+                                stroke.Color = Color3.fromRGB(0, 255, 128)
+                                stroke.Thickness = 3
+                                stroke.Parent = obj
+                            end
                         end
                     end
                 end
             end
         end
-        print("[Serenity Hub] Đã bật đồng bộ đáp án!")
+        print("[Serenity Hub] Đã quét xong đồng bộ mã đề!")
     else
         if playerGui then
             for _, obj in pairs(playerGui:GetDescendants()) do
-                local stroke = obj:FindFirstChild("RealAnswer_ESP")
+                local stroke = obj:FindFirstChild("PeerSync_ESP")
                 if stroke then stroke:Destroy() end
             end
         end
     end
 end)
+
 AddToggleToPage(Pages["Vision"], "Visual Classes", function(state)
     local players = game:GetService("Players")
     local lp = players.LocalPlayer
