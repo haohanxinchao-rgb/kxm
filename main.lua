@@ -1,4 +1,4 @@
--- SERENITY HUB // FULL PRO UI WITH TOGGLE BUTTON
+-- SERENITY HUB // FULL PRO UI WITH TOGGLE BUTTON (FIXED)
 local player = game:GetService("Players").LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
@@ -15,7 +15,7 @@ ScreenGui.ResetOnSpawn = false
 local ToggleButton = Instance.new("TextButton")
 ToggleButton.Parent = ScreenGui
 ToggleButton.BackgroundColor3 = Color3.fromRGB(24, 26, 32)
-ToggleButton.Position = UDim2.new(0.5, -25, 0.1, 0)
+ToggleButton.Position = UDim2.new(0.5, -215, 0.5, -180)
 ToggleButton.Size = UDim2.new(0, 42, 0, 42)
 ToggleButton.Font = Enum.Font.GothamBold
 ToggleButton.Text = "SR"
@@ -36,12 +36,13 @@ MainFrame.Position = UDim2.new(0.5, -230, 0.5, -140)
 MainFrame.Size = UDim2.new(0, 460, 0, 280)
 MainFrame.Active = true
 MainFrame.Draggable = true
+MainFrame.Visible = true -- Mặc định bật lên khi chạy script
 
 local MainCorner = Instance.new("UICorner")
 MainCorner.CornerRadius = UDim.new(0, 8)
 MainCorner.Parent = MainFrame
 
--- Sự kiện bấm vào nút tròn để ẩn/hiện menu chính
+-- SỬA LẠI SỰ KIỆN BẬT/TẮT MENU CHÍNH CHO CHUẨN XÁC
 ToggleButton.MouseButton1Click:Connect(function()
     MainFrame.Visible = not MainFrame.Visible
 end)
@@ -127,7 +128,7 @@ local function AddTabButton(tabName, pageName)
     btn.BackgroundTransparency = 1
     btn.Size = UDim2.new(1, 0, 0, 32)
     btn.Font = Enum.Font.GothamMedium
-    btn.Text = "   " .. tabName
+    btn.Text = "    " .. tabName
     btn.TextColor3 = Color3.fromRGB(160, 160, 170)
     btn.TextSize = 13
     btn.TextXAlignment = Enum.TextXAlignment.Left
