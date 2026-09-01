@@ -179,48 +179,50 @@ local function AddToggleToPage(page, titleText, callback)
     end)
 end
 
-AddToggleToPage(Pages["Vision"], "Answer ESP (Ô Tròn Trắc Nghiệm)", function(state)
+AddToggleToPage(Pages["Vision"], "Answer ESP (Đồng bộ đáp án người khác)", function(state)
     local player = game:GetService("Players").LocalPlayer
     local playerGui = player:FindFirstChild("PlayerGui")
     
     if state then
         if playerGui then
             for _, obj in pairs(playerGui:GetDescendants()) do
-                -- Game kiểu này thường dùng ImageButton hoặc TextButton cho các ô A B C D
-                if obj:IsA("TextButton") or obj:IsA("ImageButton") then
-                    local name = obj.Name:lower()
-                    -- Nhận diện các ô đáp án theo tên hoặc kích thước/hình dáng thường là các nút chọn tròn
-                    if name:match("^[abcd]$") or name:find("choice") or name:find("option") or name:find("answer") or name:find("dot") or obj.Size.X.Offset <= 60 then
-                        -- Đổi màu nền hoặc làm nổi bật ô đáp án
-                        if obj:IsA("TextButton") then
-                            obj.BackgroundColor3 = Color3.fromRGB(50, 255, 128)
+                -- Lọc đúng các ô đáp án dựa vào trạng thái được chọn (thường có Background tối hoặc có hình tròn đặc bên trong)
+                if obj:IsA("GuiObject") and (obj.Name:lower():match("^[abcd]$") or obj.Name:lower():find("choice") or obj.Name:lower():find("answer")) then
+                    
+                    -- Kiểm tra nếu ô đó đang ở trạng thái được chọn (ô màu đen hoặc có tích xanh như ảnh mẫu)
+                    local isFilled = false
+                    if obj.BackgroundColor3.R < 0.1 and obj.BackgroundColor3.G < 0.1 and obj.BackgroundColor3.B < 0.1 then
+                        isFilled = true
+                    end
+                    
+                    for _, child in pairs(obj:GetChildren()) do
+                        if child:IsA("GuiObject") and (child.BackgroundColor3.R < 0.1 or child.Name:lower():find("fill") or child.Name:lower():find("dot")) then
+                            isFilled = true
                         end
-                        
-                        -- Thêm viền sáng xanh lá bao quanh ô tròn giống như ảnh mẫu
-                        if not obj:FindFirstChild("Circle_ESP") then
+                    end
+                    
+                    if isFilled then
+                        if not obj:FindFirstChild("RealAnswer_ESP") then
                             local stroke = Instance.new("UIStroke")
-                            stroke.Name = "Circle_ESP"
-                            stroke.Color = Color3.fromRGB(0, 255, 128)
-                            stroke.Thickness = 3
+                            stroke.Name = "RealAnswer_ESP"
+                            stroke.Color = Color3.fromRGB(0, 255, 128) -- Viền xanh lá cực sáng cho đáp án đúng
+                            stroke.Thickness = 3.5
                             stroke.Parent = obj
                         end
                     end
                 end
             end
         end
-        print("[Serenity Hub] Đã kích hoạt tô sáng ô đáp án trắc nghiệm!")
+        print("[Serenity Hub] Đã bật đồng bộ đáp án!")
     else
         if playerGui then
             for _, obj in pairs(playerGui:GetDescendants()) do
-                local stroke = obj:FindFirstChild("Circle_ESP")
-                if stroke then 
-                    stroke:Destroy() 
-                end
+                local stroke = obj:FindFirstChild("RealAnswer_ESP")
+                if stroke then stroke:Destroy() end
             end
         end
     end
 end)
-
 AddToggleToPage(Pages["Vision"], "Visual Classes", function(state)
     local players = game:GetService("Players")
     local lp = players.LocalPlayer
