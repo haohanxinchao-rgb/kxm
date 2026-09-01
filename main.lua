@@ -179,40 +179,37 @@ local function AddToggleToPage(page, titleText, callback)
     end)
 end
 
-AddToggleToPage(Pages["Vision"], "Answer ESP (Đáp án)", function(state)
+AAddToggleToPage(Pages["Vision"], "Answer ESP (Bắt gói tin / Network)", function(state)
     if state then
-        local playerGui = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerGui")
-        if playerGui then
-            for _, gui in pairs(playerGui:GetDescendants()) do
-                if gui:IsA("TextButton") or gui:IsA("TextLabel") then
-                    local name = gui.Name:lower()
-                    local text = gui.Text:lower()
-                    
-                    -- Quét cả tên đối tượng lẫn chữ hiển thị bên trong (A, B, C, D, Đúng, Sai, v.v.)
-                    if name:find("answer") or name:find("dung") or name:find("option") or name:find("choice") or name:find("cau") or 
-                       text:find("đúng") or text:find("dung") or text:find("đáp án") then
-                        gui.BackgroundColor3 = Color3.fromRGB(50, 255, 100)
-                        -- Thêm một lớp Highlight viền sáng nếu có thể để dễ nhìn hơn
-                        if not gui:FindFirstChild("ESP_Border") then
-                            local stroke = Instance.new("UIStroke")
-                            stroke.Name = "ESP_Border"
-                            stroke.Color = Color3.fromRGB(255, 255, 0)
-                            stroke.Thickness = 2
-                            stroke.Parent = gui
+        print("[Serenity Hub] Đang bật lắng nghe RemoteEvent để tìm đáp án...")
+        
+        -- Lắng nghe các sự kiện mạng (RemoteEvent/RemoteFunction) từ Server gửi xuống
+        local mt = getrawmetatable(game)
+        if mt and mt.__namecall then
+            setreadonly(mt, false)
+            local oldNamecall = mt.__namecall
+            
+            mt.__namecall = newcclosure(function(self, ...)
+                local method = getnamecallmethod()
+                local args = {...}
+                
+                -- Kiểm tra nếu server gửi dữ liệu về client (thường chứa câu hỏi hoặc kết quả)
+                if method == "FireClient" or method == "InvokeClient" or tostring(self):lower():find("remote") then
+                    for i, v in pairs(args) do
+                        if type(v) == "table" then
+                            -- In ra bảng dữ liệu nếu tìm thấy thông tin nghi ngờ là đáp án
+                            print("[Found Data]:", game:GetService("HttpService"):JSONEncode(v))
+                        elseif type(v) == "string" and v ~= "" then
+                            print("[Found String]:", v)
                         end
                     end
                 end
-            end
+                return oldNamecall(self, ...)
+            end)
+            setreadonly(mt, true)
         end
     else
-        -- Xóa hiệu ứng khi tắt đi
-        local playerGui = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerGui")
-        if playerGui then
-            for _, gui in pairs(playerGui:GetDescendants()) do
-                local stroke = gui:FindFirstChild("ESP_Border")
-                if stroke then stroke:Destroy() end
-            end
-        end
+        print("[Serenity Hub] Đã tắt bắt gói tin.")
     end
 end)
 
