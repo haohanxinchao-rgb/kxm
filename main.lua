@@ -1,4 +1,4 @@
--- SERENITY HUB // CLEAN & SAFE UI
+-- SERENITY HUB // FULL PRO UI WITH TOGGLE BUTTON
 local player = game:GetService("Players").LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
@@ -7,16 +7,29 @@ if playerGui:FindFirstChild("SerenityHub_Pro") then
 end
 
 local ScreenGui = Instance.new("ScreenGui")
-local MainFrame = Instance.new("Frame")
-local UICorner = Instance.new("UICorner")
-local Sidebar = Instance.new("Frame")
-local ContainerHolder = Instance.new("Frame")
-
-ScreenGui.Parent = playerGui
 ScreenGui.Name = "SerenityHub_Pro"
+ScreenGui.Parent = playerGui
 ScreenGui.ResetOnSpawn = false
 
--- Khung chính
+-- 1. NÚT BẬT/TẮT MENU (Icon nhỏ ở cạnh màn hình, kéo thả được)
+local ToggleButton = Instance.new("TextButton")
+ToggleButton.Parent = ScreenGui
+ToggleButton.BackgroundColor3 = Color3.fromRGB(24, 26, 32)
+ToggleButton.Position = UDim2.new(0, 20, 0.4, 0)
+ToggleButton.Size = UDim2.new(0, 42, 0, 42)
+ToggleButton.Font = Enum.Font.GothamBold
+ToggleButton.Text = "SR"
+ToggleButton.TextColor3 = Color3.fromRGB(0, 229, 255)
+ToggleButton.TextSize = 14
+ToggleButton.Active = true
+ToggleButton.Draggable = true
+
+local ToggleCorner = Instance.new("UICorner")
+ToggleCorner.CornerRadius = UDim.new(1, 0)
+ToggleCorner.Parent = ToggleButton
+
+-- 2. KHUNG MENU CHÍNH
+local MainFrame = Instance.new("Frame")
 MainFrame.Parent = ScreenGui
 MainFrame.BackgroundColor3 = Color3.fromRGB(18, 20, 24)
 MainFrame.Position = UDim2.new(0.5, -230, 0.5, -140)
@@ -24,10 +37,17 @@ MainFrame.Size = UDim2.new(0, 460, 0, 280)
 MainFrame.Active = true
 MainFrame.Draggable = true
 
-UICorner.CornerRadius = UDim.new(0, 8)
-UICorner.Parent = MainFrame
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 8)
+MainCorner.Parent = MainFrame
 
--- Thanh Sidebar bên trái
+-- Sự kiện bấm vào nút tròn để ẩn/hiện menu chính
+ToggleButton.MouseButton1Click:Connect(function()
+    MainFrame.Visible = not MainFrame.Visible
+end)
+
+-- 3. THANH SIDEBAR BÊN TRÁI
+local Sidebar = Instance.new("Frame")
 Sidebar.Parent = MainFrame
 Sidebar.BackgroundColor3 = Color3.fromRGB(24, 26, 32)
 Sidebar.Size = UDim2.new(0, 130, 1, 0)
@@ -44,7 +64,7 @@ LogoTitle.TextColor3 = Color3.fromRGB(0, 229, 255)
 LogoTitle.TextSize = 14
 LogoTitle.TextXAlignment = Enum.TextXAlignment.Left
 
--- Nút Đóng (X)
+-- Nút Đóng (X) hoàn toàn giao diện
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.Parent = MainFrame
 CloseBtn.BackgroundColor3 = Color3.fromRGB(255, 75, 75)
@@ -63,7 +83,8 @@ CloseBtn.MouseButton1Click:Connect(function()
     ScreenGui:Destroy()
 end)
 
--- Vùng chứa nội dung
+-- 4. KHU VỰC NỘI DUNG VÀ TAB
+local ContainerHolder = Instance.new("Frame")
 ContainerHolder.Parent = MainFrame
 ContainerHolder.BackgroundTransparency = 1
 ContainerHolder.Position = UDim2.new(0, 140, 0, 40)
@@ -126,7 +147,6 @@ CreatePage("Vision")
 
 AddTabButton("📊 Dashboard", "Dashboard")
 AddTabButton("👁️ Vision", "Vision")
-
 Pages["Dashboard"].Visible = true
 
 local function AddToggleToPage(page, titleText, callback)
@@ -158,7 +178,7 @@ local function AddToggleToPage(page, titleText, callback)
     end)
 end
 
--- 1. Answer ESP (Đáp án)
+-- 5. GẮN CÁC CHỨC NĂNG THẬT VÀO TAB VISION
 AddToggleToPage(Pages["Vision"], "Answer ESP (Đáp án)", function(state)
     if state then
         local playerGui = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerGui")
@@ -172,12 +192,11 @@ AddToggleToPage(Pages["Vision"], "Answer ESP (Đáp án)", function(state)
     end
 end)
 
--- 2. Visual Classes
 AddToggleToPage(Pages["Vision"], "Visual Classes", function(state)
     local players = game:GetService("Players")
-    local player = players.LocalPlayer
+    local lp = players.LocalPlayer
     for _, p in pairs(players:GetPlayers()) do
-        if p ~= player and p.Character then
+        if p ~= lp and p.Character then
             if state then
                 if not p.Character:FindFirstChild("Player_Highlight") then
                     local hl = Instance.new("Highlight")
@@ -195,7 +214,6 @@ AddToggleToPage(Pages["Vision"], "Visual Classes", function(state)
     end
 end)
 
--- 3. Teacher ESP (Tìm giáo viên)
 AddToggleToPage(Pages["Vision"], "Teacher ESP (Tìm giáo viên)", function(state)
     local workspace = game:GetService("Workspace")
     if state then
