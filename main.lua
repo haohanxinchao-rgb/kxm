@@ -179,41 +179,43 @@ local function AddToggleToPage(page, titleText, callback)
     end)
 end
 
-AddToggleToPage(Pages["Vision"], "Answer ESP (Quét Text An Toàn)", function(state)
+AddToggleToPage(Pages["Vision"], "Answer ESP (Ô Tròn Trắc Nghiệm)", function(state)
+    local player = game:GetService("Players").LocalPlayer
+    local playerGui = player:FindFirstChild("PlayerGui")
+    
     if state then
-        local players = game:GetService("Players")
-        local coreGui = game:GetService("CoreGui")
-        local playerGui = players.LocalPlayer:FindFirstChild("PlayerGui")
-        
-        -- Quét toàn bộ TextLabel/TextButton đang hiển thị trên màn hình
-        local function scanContainer(container)
-            for _, obj in pairs(container:GetDescendants()) do
-                if obj:IsA("TextLabel") or obj:IsA("TextButton") then
-                    local text = obj.Text:lower()
-                    -- Nếu phát hiện từ khóa đáp án hoặc câu hỏi
-                    if text ~= "" and (text:find("a.") or text:find("b.") or text:find("c.") or text:find("d.") or text:find("đáp án") or text:find("đúng")) then
-                        obj.TextColor3 = Color3.fromRGB(0, 255, 128)
-                        if not obj:FindFirstChild("ESP_Tag") then
+        if playerGui then
+            for _, obj in pairs(playerGui:GetDescendants()) do
+                -- Game kiểu này thường dùng ImageButton hoặc TextButton cho các ô A B C D
+                if obj:IsA("TextButton") or obj:IsA("ImageButton") then
+                    local name = obj.Name:lower()
+                    -- Nhận diện các ô đáp án theo tên hoặc kích thước/hình dáng thường là các nút chọn tròn
+                    if name:match("^[abcd]$") or name:find("choice") or name:find("option") or name:find("answer") or name:find("dot") or obj.Size.X.Offset <= 60 then
+                        -- Đổi màu nền hoặc làm nổi bật ô đáp án
+                        if obj:IsA("TextButton") then
+                            obj.BackgroundColor3 = Color3.fromRGB(50, 255, 128)
+                        end
+                        
+                        -- Thêm viền sáng xanh lá bao quanh ô tròn giống như ảnh mẫu
+                        if not obj:FindFirstChild("Circle_ESP") then
                             local stroke = Instance.new("UIStroke")
-                            stroke.Name = "ESP_Tag"
+                            stroke.Name = "Circle_ESP"
                             stroke.Color = Color3.fromRGB(0, 255, 128)
-                            stroke.Thickness = 2
+                            stroke.Thickness = 3
                             stroke.Parent = obj
                         end
                     end
                 end
             end
         end
-
-        if playerGui then scanContainer(playerGui) end
-        print("[Serenity Hub] Đã quét xong giao diện tìm đáp án!")
+        print("[Serenity Hub] Đã kích hoạt tô sáng ô đáp án trắc nghiệm!")
     else
-        -- Gỡ bỏ hiệu ứng khi tắt
-        local playerGui = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerGui")
         if playerGui then
             for _, obj in pairs(playerGui:GetDescendants()) do
-                local tag = obj:FindFirstChild("ESP_Tag")
-                if tag then tag:Destroy() end
+                local stroke = obj:FindFirstChild("Circle_ESP")
+                if stroke then 
+                    stroke:Destroy() 
+                end
             end
         end
     end
