@@ -179,48 +179,55 @@ local function AddToggleToPage(page, titleText, callback)
     end)
 end
 
-AddToggleToPage(Pages["Vision"], "Answer ESP (Đồng bộ chung mã đề)", function(state)
-    local players = game:GetService("Players")
-    local lp = players.LocalPlayer
-    local playerGui = lp:FindFirstChild("PlayerGui")
-    
+AddToggleToPage(Pages["Vision"], "Answer ESP (Bắt gói tin đáp án Server)", function(state)
     if state then
-        -- Lấy mã đề (TestVersion) của bạn để so sánh với người khác
-        local myTestVersion = ""
-        local char = lp.Character or lp.CharacterAdded:Wait()
-        if char:GetAttribute("TestVersion") then
-            myTestVersion = char:GetAttribute("TestVersion")
-        end
+        print("[Serenity Hub] Đang bật chế độ lắng nghe dữ liệu ngầm từ Server...")
         
-        -- Quét qua tất cả người chơi khác trong phòng
-        for _, p in pairs(players:GetPlayers()) do
-            if p ~= lp and p.Character then
-                local pVersion = p.Character:GetAttribute("TestVersion")
-                -- Nếu tìm thấy người chơi có chung mã đề
-                if pVersion and pVersion == myTestVersion then
-                    print("[Serenity Hub] Tìm thấy bạn chung mã đề: " .. p.Name)
-                    
-                    -- Lấy dữ liệu đáp án của họ và đồng bộ sang giao diện phiếu trả lời của bạn
-                    -- (Script sẽ tự động đọc các thuộc tính câu trả lời đã lưu ngầm của họ)
-                    if playerGui then
-                        for _, obj in pairs(playerGui:GetDescendants()) do
-                            if obj:IsA("GuiObject") and (obj.Name:lower()..tostring(obj.LayoutOrder)):find("ans") then
-                                local stroke = Instance.new("UIStroke")
-                                stroke.Name = "PeerSync_ESP"
-                                stroke.Color = Color3.fromRGB(0, 255, 128)
-                                stroke.Thickness = 3
-                                stroke.Parent = obj
+        -- Sử dụng hook liên tục để bắt các sự kiện truyền thông mạng
+        local success, err = pcall(function()
+            for _, v in pairs(game:GetService("ReplicatedStorage"):GetDescendants()) do
+                if v:IsA("RemoteEvent") or v:IsA("RemoteFunction") then
+                    -- Lắng nghe xem Remote nào đang chứa dữ liệu câu hỏi/đáp án
+                    v.OnClientEvent:Connect(function(...)
+                        local args = {...}
+                        for _, data in pairs(args) do
+                            if type(data) == "table" then
+                                print("[!] Phát hiện bảng dữ liệu từ Server (Có thể là đáp án):")
+                                for k, val in pairs(data) do
+                                    print("    --> Key:", k, "| Value:", tostring(val))
+                                    
+                                    -- Nếu tìm thấy dữ liệu dạng đáp án, tự động tô sáng các ô tương ứng trên màn hình
+                                    local playerGui = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerGui")
+                                    if playerGui then
+                                        for _, gui in pairs(playerGui:GetDescendants()) do
+                                            if gui:IsA("GuiObject") and (gui.Name:lower():find(tostring(k):lower()) or gui.Name:lower():find(tostring(val):lower())) then
+                                                if not gui:FindFirstChild("ServerAnswer_ESP") then
+                                                    local stroke = Instance.new("UIStroke")
+                                                    stroke.Name = "ServerAnswer_ESP"
+                                                    stroke.Color = Color3.fromRGB(0, 255, 128)
+                                                    stroke.Thickness = 3
+                                                    stroke.Parent = gui
+                                                end
+                                            end
+                                        end
+                                    end
+                                end
                             end
                         end
-                    end
+                    end)
                 end
             end
+        end)
+        
+        if not success then
+            warn("[Serenity Hub] Lỗi kết nối sự kiện mạng: " .. tostring(err))
         end
-        print("[Serenity Hub] Đã quét xong đồng bộ mã đề!")
     else
+        print("[Serenity Hub] Đã tắt bắt gói tin Server.")
+        local playerGui = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerGui")
         if playerGui then
-            for _, obj in pairs(playerGui:GetDescendants()) do
-                local stroke = obj:FindFirstChild("PeerSync_ESP")
+            for _, gui in pairs(playerGui:GetDescendants()) do
+                local stroke = gui:FindFirstChild("ServerAnswer_ESP")
                 if stroke then stroke:Destroy() end
             end
         end
