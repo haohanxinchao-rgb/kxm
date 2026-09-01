@@ -158,6 +158,64 @@ local function AddToggleToPage(page, titleText, callback)
     end)
 end
 
-AddToggleToPage(Pages["Vision"], "Answer ESP (Đáp án)", function(v) print("Answer ESP: ", v) end)
-AddToggleToPage(Pages["Vision"], "Visual Classes", function(v) print("Visual Classes: ", v) end)
-AddToggleToPage(Pages["Vision"], "Teacher ESP (Tìm giáo viên)", function(v) print("Teacher ESP: ", v) end)
+-- 1. Answer ESP (Đáp án)
+AddToggleToPage(Pages["Vision"], "Answer ESP (Đáp án)", function(state)
+    if state then
+        local playerGui = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerGui")
+        if playerGui then
+            for _, gui in pairs(playerGui:GetDescendants()) do
+                if gui:IsA("TextButton") and (gui.Name:lower():find("answer") or gui.Name:lower():find("dung") or gui.Name:lower():find("option")) then
+                    gui.BackgroundColor3 = Color3.fromRGB(50, 255, 100)
+                end
+            end
+        end
+    end
+end)
+
+-- 2. Visual Classes
+AddToggleToPage(Pages["Vision"], "Visual Classes", function(state)
+    local players = game:GetService("Players")
+    local player = players.LocalPlayer
+    for _, p in pairs(players:GetPlayers()) do
+        if p ~= player and p.Character then
+            if state then
+                if not p.Character:FindFirstChild("Player_Highlight") then
+                    local hl = Instance.new("Highlight")
+                    hl.Name = "Player_Highlight"
+                    hl.Parent = p.Character
+                    hl.FillColor = Color3.fromRGB(0, 150, 255)
+                    hl.FillTransparency = 0.5
+                end
+            else
+                if p.Character:FindFirstChild("Player_Highlight") then
+                    p.Character.Player_Highlight:Destroy()
+                end
+            end
+        end
+    end
+end)
+
+-- 3. Teacher ESP (Tìm giáo viên)
+AddToggleToPage(Pages["Vision"], "Teacher ESP (Tìm giáo viên)", function(state)
+    local workspace = game:GetService("Workspace")
+    if state then
+        for _, obj in pairs(workspace:GetDescendants()) do
+            if obj:IsA("Model") and (obj.Name:lower():find("teacher") or obj.Name:lower():find("gv") or obj.Name:lower():find("giao vien")) then
+                if not obj:FindFirstChild("ESP_Highlight") then
+                    local highlight = Instance.new("Highlight")
+                    highlight.Name = "ESP_Highlight"
+                    highlight.Parent = obj
+                    highlight.FillColor = Color3.fromRGB(255, 50, 50)
+                    highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+                    highlight.FillTransparency = 0.4
+                end
+            end
+        end
+    else
+        for _, obj in pairs(workspace:GetDescendants()) do
+            if obj.Name == "ESP_Highlight" then
+                obj:Destroy()
+            end
+        end
+    end
+end)
