@@ -179,21 +179,40 @@ local function AddToggleToPage(page, titleText, callback)
     end)
 end
 
--- 5. GẮN CÁC CHỨC NĂNG THẬT VÀO TAB VISION
 AddToggleToPage(Pages["Vision"], "Answer ESP (Đáp án)", function(state)
     if state then
         local playerGui = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerGui")
         if playerGui then
-            -- Tự động quét toàn bộ PlayerGui để tìm các nút đáp án
             for _, gui in pairs(playerGui:GetDescendants()) do
-                if gui:IsA("TextButton") and (gui.Name:lower():find("answer") or gui.Name:lower():find("dung") or gui.Name:lower():find("option")) then
-                    -- Đổi màu nền thành xanh lá để làm nổi bật đáp án đúng
-                    gui.BackgroundColor3 = Color3.fromRGB(50, 255, 100)
+                if gui:IsA("TextButton") or gui:IsA("TextLabel") then
+                    local name = gui.Name:lower()
+                    local text = gui.Text:lower()
+                    
+                    -- Quét cả tên đối tượng lẫn chữ hiển thị bên trong (A, B, C, D, Đúng, Sai, v.v.)
+                    if name:find("answer") or name:find("dung") or name:find("option") or name:find("choice") or name:find("cau") or 
+                       text:find("đúng") or text:find("dung") or text:find("đáp án") then
+                        gui.BackgroundColor3 = Color3.fromRGB(50, 255, 100)
+                        -- Thêm một lớp Highlight viền sáng nếu có thể để dễ nhìn hơn
+                        if not gui:FindFirstChild("ESP_Border") then
+                            local stroke = Instance.new("UIStroke")
+                            stroke.Name = "ESP_Border"
+                            stroke.Color = Color3.fromRGB(255, 255, 0)
+                            stroke.Thickness = 2
+                            stroke.Parent = gui
+                        end
+                    end
                 end
             end
         end
     else
-        -- Khi tắt đi, có thể khôi phục lại màu cũ nếu cần (hoặc giữ nguyên trạng thái game)
+        -- Xóa hiệu ứng khi tắt đi
+        local playerGui = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerGui")
+        if playerGui then
+            for _, gui in pairs(playerGui:GetDescendants()) do
+                local stroke = gui:FindFirstChild("ESP_Border")
+                if stroke then stroke:Destroy() end
+            end
+        end
     end
 end)
 
