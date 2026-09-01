@@ -184,12 +184,16 @@ AddToggleToPage(Pages["Vision"], "Answer ESP (Đáp án)", function(state)
     if state then
         local playerGui = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerGui")
         if playerGui then
+            -- Tự động quét toàn bộ PlayerGui để tìm các nút đáp án
             for _, gui in pairs(playerGui:GetDescendants()) do
                 if gui:IsA("TextButton") and (gui.Name:lower():find("answer") or gui.Name:lower():find("dung") or gui.Name:lower():find("option")) then
+                    -- Đổi màu nền thành xanh lá để làm nổi bật đáp án đúng
                     gui.BackgroundColor3 = Color3.fromRGB(50, 255, 100)
                 end
             end
         end
+    else
+        -- Khi tắt đi, có thể khôi phục lại màu cũ nếu cần (hoặc giữ nguyên trạng thái game)
     end
 end)
 
