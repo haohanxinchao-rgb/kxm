@@ -179,37 +179,43 @@ local function AddToggleToPage(page, titleText, callback)
     end)
 end
 
-AAddToggleToPage(Pages["Vision"], "Answer ESP (Bắt gói tin / Network)", function(state)
+AddToggleToPage(Pages["Vision"], "Answer ESP (Quét Text An Toàn)", function(state)
     if state then
-        print("[Serenity Hub] Đang bật lắng nghe RemoteEvent để tìm đáp án...")
+        local players = game:GetService("Players")
+        local coreGui = game:GetService("CoreGui")
+        local playerGui = players.LocalPlayer:FindFirstChild("PlayerGui")
         
-        -- Lắng nghe các sự kiện mạng (RemoteEvent/RemoteFunction) từ Server gửi xuống
-        local mt = getrawmetatable(game)
-        if mt and mt.__namecall then
-            setreadonly(mt, false)
-            local oldNamecall = mt.__namecall
-            
-            mt.__namecall = newcclosure(function(self, ...)
-                local method = getnamecallmethod()
-                local args = {...}
-                
-                -- Kiểm tra nếu server gửi dữ liệu về client (thường chứa câu hỏi hoặc kết quả)
-                if method == "FireClient" or method == "InvokeClient" or tostring(self):lower():find("remote") then
-                    for i, v in pairs(args) do
-                        if type(v) == "table" then
-                            -- In ra bảng dữ liệu nếu tìm thấy thông tin nghi ngờ là đáp án
-                            print("[Found Data]:", game:GetService("HttpService"):JSONEncode(v))
-                        elseif type(v) == "string" and v ~= "" then
-                            print("[Found String]:", v)
+        -- Quét toàn bộ TextLabel/TextButton đang hiển thị trên màn hình
+        local function scanContainer(container)
+            for _, obj in pairs(container:GetDescendants()) do
+                if obj:IsA("TextLabel") or obj:IsA("TextButton") then
+                    local text = obj.Text:lower()
+                    -- Nếu phát hiện từ khóa đáp án hoặc câu hỏi
+                    if text ~= "" and (text:find("a.") or text:find("b.") or text:find("c.") or text:find("d.") or text:find("đáp án") or text:find("đúng")) then
+                        obj.TextColor3 = Color3.fromRGB(0, 255, 128)
+                        if not obj:FindFirstChild("ESP_Tag") then
+                            local stroke = Instance.new("UIStroke")
+                            stroke.Name = "ESP_Tag"
+                            stroke.Color = Color3.fromRGB(0, 255, 128)
+                            stroke.Thickness = 2
+                            stroke.Parent = obj
                         end
                     end
                 end
-                return oldNamecall(self, ...)
-            end)
-            setreadonly(mt, true)
+            end
         end
+
+        if playerGui then scanContainer(playerGui) end
+        print("[Serenity Hub] Đã quét xong giao diện tìm đáp án!")
     else
-        print("[Serenity Hub] Đã tắt bắt gói tin.")
+        -- Gỡ bỏ hiệu ứng khi tắt
+        local playerGui = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerGui")
+        if playerGui then
+            for _, obj in pairs(playerGui:GetDescendants()) do
+                local tag = obj:FindFirstChild("ESP_Tag")
+                if tag then tag:Destroy() end
+            end
+        end
     end
 end)
 
